@@ -11,7 +11,7 @@ export class LoginTest extends BaseTest {
   @test
   public async serverInfo() {
     const res = await this.post(`{
-      accountInfo {
+      account {
         host
         time,
         buildTime
@@ -22,10 +22,15 @@ export class LoginTest extends BaseTest {
           authorName
           authorDate
         }
+        errors {
+          path
+          name
+          value
+        }
       }
     }`);
     expect(res.status, res.log).to.eql(200);
-    expect(res.body, res.log).to.not.haveOwnProperty("errors");
+    expect(res.body.data.account.errors, res.log).to.eql(null);
   }
 
   @test
@@ -38,10 +43,17 @@ export class LoginTest extends BaseTest {
       auth(clientKey: "${ecdh.getPublicKey().toString("base64")}") {
         serverKey
       }
+      account {
+        errors {
+          path
+          name
+          value
+        }
+      }
     }`);
     let val = res.body;
     expect(res.status, res.log).to.eql(200);
-    expect(res.body, res.log).to.not.haveOwnProperty("errors");
+    expect(res.body.data.account.errors, res.log).to.eql(null);
     expect(val, res.log).to.haveOwnProperty("data");
     expect(val.data, res.log).to.haveOwnProperty("auth");
     expect(val.data.auth, res.log).to.haveOwnProperty("serverKey");
@@ -74,16 +86,22 @@ export class LoginTest extends BaseTest {
 
     res = await this.post(`{
       auth(clientKey: "${ecdh.getPublicKey().toString("base64")}") {
-        salt(xlogin: "${xlogin}")
+        salt(xlogin: "${xlogin}") {
+          value
+          error {
+            name
+          }
+        }
       }
     }`);
     val = res.body;
     expect(res.status, res.log).to.eql(200);
-    expect(res.body, res.log).to.not.haveOwnProperty("errors");
     expect(val, res.log).to.haveOwnProperty("data");
     expect(val.data, res.log).to.haveOwnProperty("auth");
     expect(val.data.auth, res.log).to.haveOwnProperty("salt");
-    const xsalt = val.data.auth.salt;
+    expect(val.data.auth.salt, res.log).to.haveOwnProperty("value");
+    expect(val.data.auth.salt.error, res.log).to.eql(null);
+    const xsalt = val.data.auth.salt.value;
 
     const aesd = crypto.createDecipheriv("aes-256-ctr", aesKey, aesSalt);
     const salt = Buffer.concat([
@@ -110,12 +128,18 @@ export class LoginTest extends BaseTest {
     res = await this.post(`{
       auth(clientKey: "${ecdh.getPublicKey().toString("base64")}") {
         login(xlogin: "${xlogin}", xhpassword: "${xhpassword}") {
-          seq token
+          seq
+          token
+          errors {
+            path
+            name
+          }
         }
       }
     }`);
     expect(res.status, res.log).to.eql(200);
-    expect(res.body, res.log).to.not.haveOwnProperty("errors");
+    expect(res.body.data.auth.login.errors, res.log).to.eql(null);
+    expect(res.body.data.auth.login.token, res.log).to.not.eql(null);
     values.token = res.body.data.auth.login.token;
   }
 
@@ -131,12 +155,17 @@ export class LoginTest extends BaseTest {
         expiredAt
         token {
           seq
-          token
+          value
+          errors {
+            path
+            name
+          }
         }
       }
     }`);
     expect(res.status, res.log).to.eql(200);
-    expect(res.body, res.log).to.not.haveOwnProperty("errors");
+    expect(res.body.data.me, res.log).to.not.eql(null);
+    expect(res.body.data.me.name, res.log).to.eql("Admin");
     expect(res.body.data.me.token, res.log).to.eql(null);
   }
 
@@ -152,18 +181,24 @@ export class LoginTest extends BaseTest {
         expiredAt
         token {
           seq
-          token
+          value
+          errors {
+            path
+            name
+            value
+          }
         }
       }
     }`, { token: null });
     expect(res.status, res.log).to.eql(200);
-    expect(res.body, res.log).to.not.haveOwnProperty("errors");
     expect(res.body.data.me.clientKey, res.log).to.eql(null);
     expect(res.body.data.me.privileges, res.log).to.eql([]);
+    expect(res.body.data.me.token, res.log).to.eql(null);
   }
 
   @test
   public async testExpiredSessionToken() {
+    await new Promise(resolve => setTimeout(resolve, 2000));
     const res = await this.post(`{
       me {
         clientKey
@@ -174,17 +209,20 @@ export class LoginTest extends BaseTest {
         expiredAt
         token {
           seq
-          token
+          value
+          errors {
+            path
+            name
+          }
         }
       }
     }`, {
       token:
-        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGgifQ.eyJjayI6IkJQZURZL0xRRTk1b0dMYitTMDU0bWJYSHduNzJ0eUQ1N2tXbGNMQUM2cmI3dzVhRXEzRWFDZlZ5YzF5dnd5U1FHUGNUTlRqMzlPZ2diYm40RFRRektXZz0iLCJ4bCI6IjhQbjNDNmM9IiwibiI6IkFkbWluIiwicCI6WyJ1c2VyLnJlYWQiLCJ1c2VyLnVwZGF0ZSIsInVzZXIuYWN0aXZhdGUiLCJ1c2VyLmRlYWN0aXZhdGUiLCJyb2xlLmNyZWF0ZSIsInJvbGUucmVhZCIsInJvbGUudXBkYXRlIiwicm9sZS5kZWxldGUiLCJtb3ZpZS5jcmVhdGUiLCJtb3ZpZS5yZWFkIiwibW92aWUudXBkYXRlIiwibW92aWUuZGVsZXRlIl0sImlhdCI6MTU3MTE4ODg3MywiZXhwIjoxNTcxMTg4ODc4fQ.QZsB1IKho3zq2WG_VFE7ncOWadBiFFyVvoCWrG2kdNbBM96ACZXQT0gomC6w1BGGd_EIkDomKUGkzfd5UIGmoQ"
+        "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImF1dGgifQ.eyJjayI6IkJNK2F6WU9jWHg5czEzMUFtUGI1OWlqZ0lHRno0UDNQTnUyaTQ4NnU0b3lOcDd0dlhRZDJHN3dOeEFpaXVKZEsxRDRBeHBReDBDYnlKa05LeUM4cFBXbz0iLCJ4bCI6Ilp5OVFXQWc9IiwibiI6IkFkbWluIiwicCI6WyJ1c2VyLnJlYWQiLCJ1c2VyLnVwZGF0ZSIsInVzZXIuYWN0aXZhdGUiLCJ1c2VyLmRlYWN0aXZhdGUiLCJyb2xlLmNyZWF0ZSIsInJvbGUucmVhZCIsInJvbGUudXBkYXRlIiwicm9sZS5kZWxldGUiLCJtb3ZpZS5jcmVhdGUiLCJtb3ZpZS5yZWFkIiwibW92aWUudXBkYXRlIiwibW92aWUuZGVsZXRlIl0sImlhdCI6MTU3NTI3NjcxNywiZXhwIjoxNTc1Mjc2NzIyfQ.7wUYnnnkOx-UBheBQuFIQMK42M3YAOs48h_X3DUjPGjMYmeozQnHZ6c82n3aLlTqQHqNaSodiKIHSvTswEwM8A"
     });
-    expect(res.status, res.log).to.eql(400);
-    expect(res.body, res.log).to.haveOwnProperty("errors");
-    expect(res.body.errors[0], res.log).to.haveOwnProperty("extensions");
-    expect(res.body.errors[0].extensions.code, res.log).to.eql("SessionExpiredError");
+    expect(res.status, res.log).to.eql(200);
+    expect(res.body.data.me.token.errors, res.log).to.not.eql(null);
+    expect(res.body.data.me.token.errors[0].name, res.log).to.eql("SessionExpiredError");
   }
 
   @test
@@ -217,13 +255,18 @@ export class LoginTest extends BaseTest {
         expiredAt
         token {
           seq
-          token
+          value
+          errors {
+            path
+            name
+            value
+          }
         }
       }
     }`);
     expect(res.status, res.log).to.eql(200);
-    expect(res.body, res.log).to.not.haveOwnProperty("errors");
     expect(res.body.data.me.token, res.log).to.not.eql(null);
-    expect(res.body.data.me.token.token, res.log).to.not.eql(null);
+    expect(res.body.data.me.token.value, res.log).to.not.eql(null);
+    expect(res.body.data.me.token.errors, res.log).to.eql(null);
   }
 }

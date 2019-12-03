@@ -3,50 +3,22 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
-input AddMovieInput {
-  title: String!
-  year: Int!
-  cast: [String!]
-  genres: [String!]
-}
+directive @extends on INTERFACE | OBJECT
 
-input AddUserInput {
-  login: String!
-  name: String!
-  description: String
-  roles: [String!]!
-}
+directive @external on FIELD_DEFINITION | OBJECT
 
-type Auth {
-  serverKey: String!
-  salt(xlogin: String!): String!
-  login(expiry: Int, xhpassword: String!, xlogin: String!): Token!
-}
+directive @key(fields: String!) on INTERFACE | OBJECT
 
-type AuthConfig {
-  loginExpiry: Int!
-  sessionExpiry: Int!
-  tokenExpiry: Int!
-}
+directive @provides(fields: String!) on FIELD_DEFINITION
 
-type AuthConfigPbkdf2 {
-  iterations: Int!
-  curves: Int!
-}
+directive @requires(fields: String!) on FIELD_DEFINITION
 
 type Commit {
-  hash: String!
   abbrevHash: String!
-  subject: String!
-  authorName: String!
   authorDate: DateTime!
-}
-
-input CreateRoleInput {
-  code: String!
-  name: String!
-  description: String
-  privileges: [String!]
+  authorName: String!
+  hash: String!
+  subject: String!
 }
 
 """
@@ -54,178 +26,20 @@ The javascript `Date` as string. Type represents date and time as the ISO Date s
 """
 scalar DateTime
 
-type DeleteResponse {
-  deleted: Int!
-}
-
-input FilterMovieInput {
-  id: ID
-  title: String
-  titleRegex: String
-  year: Int
-}
-
-input FilterRoleInput {
-  id: ID
-  code: String
+type Error {
   name: String
-  nameRegex: String
-}
-
-input FilterUserInput {
-  id: ID
-  login: String
-  name: String
-  nameRegex: String
-}
-
-type Movie {
-  id: String!
-  title: String!
-  year: Int!
-  cast: [String!]
-  genres: [String!]
-}
-
-enum MovieField {
-  id
-  title
-  year
-}
-
-type Mutation {
-  createUser(data: AddUserInput!): User!
-  updateUsers(data: UpdateUserInput!, filter: FilterUserInput!): UpdateResponse!
-  deleteUsers(filter: FilterUserInput!): DeleteResponse!
-  createRole(data: CreateRoleInput!): Role!
-  updateRoles(data: UpdateRoleInput!, filter: FilterRoleInput!): UpdateResponse!
-  deleteRoles(filter: FilterRoleInput!): DeleteResponse!
-  createMovie(data: AddMovieInput!): Movie!
-  updateMovies(data: UpdateMovieInput!, filter: FilterMovieInput!): UpdateResponse!
-  deleteMovies(filter: FilterMovieInput!): DeleteResponse!
-  logout: Boolean!
-}
-
-input OrderByMovieInput {
-  field: MovieField!
-  type: OrderByType!
-}
-
-input OrderByRoleInput {
-  field: RoleField!
-  type: OrderByType!
-}
-
-enum OrderByType {
-  asc
-  desc
-}
-
-input OrderByUserInput {
-  field: UserField!
-  type: OrderByType!
-}
-
-type PartialMovie {
-  items: [Movie!]!
-  total: Int!
-}
-
-type PartialRole {
-  items: [Role!]!
-  total: Int!
-}
-
-type PartialUser {
-  items: [User!]!
-  total: Int!
+  path: String
+  value: String
 }
 
 type Query {
-  user(id: ID!): User
-  users(orderBy: [OrderByUserInput!], filter: FilterUserInput, limit: Int, skip: Int): PartialUser
-  role(id: ID!): Role
-  roles(orderBy: [OrderByRoleInput!], filter: FilterRoleInput, limit: Int, skip: Int): PartialRole
-  movie(id: ID!): Movie
-  movies(orderBy: [OrderByMovieInput!], filter: FilterMovieInput, limit: Int, skip: Int): PartialMovie
-  auth(clientKey: String!): Auth!
-  authConfig: AuthConfig!
-  accountInfo: ServerInfo!
-  me(ts: String): UserToken
-}
-
-type Role {
-  id: ID!
-  code: String!
-  name: String!
-  description: String
-  privileges: [String!]
-}
-
-enum RoleField {
-  id
-  code
-  name
+  common: ServerInfo!
 }
 
 type ServerInfo {
-  host: String!
-  time: DateTime!
   buildTime: DateTime!
   commits: [Commit!]!
-}
-
-type Token {
-  seq: String!
-  token: String!
-}
-
-input UpdateMovieInput {
-  title: String!
-  year: Int!
-  cast: [String!]
-  genres: [String!]
-}
-
-type UpdateResponse {
-  matched: Int
-  modified: Int!
-}
-
-input UpdateRoleInput {
-  code: String
-  name: String
-  description: String
-  privileges: [String!]
-}
-
-input UpdateUserInput {
-  login: String
-  name: String
-  description: String
-  roles: [String!]
-}
-
-type User {
-  id: String!
-  login: String!
-  name: String!
-  roles: [String!]!
-}
-
-enum UserField {
-  id
-  login
-  name
-}
-
-type UserToken {
-  time: DateTime
-  clientKey: ID
-  xlogin: String
-  name: String
-  privileges: [String!]
-  issuedAt: DateTime
-  expiredAt: DateTime
-  token: Token
+  errors: [Error!]
+  host: String!
+  time: DateTime!
 }

@@ -1,9 +1,9 @@
 const { dest, src } = require("gulp");
 const shell = require("shelljs");
-const { spawn } = require("child_process");
 const args = require("yargs").argv;
 const gitlog = require("gitlog");
 const fs = require("fs");
+const path = require("path");
 const netstat = require('node-netstat');
 
 async function tsc() {
@@ -16,6 +16,7 @@ async function build() {
   await shell.exec("yarn --frozen-lockfile", {
     async: false
   });
+  await fix();
   await tsc();
   await copyData();
   const commits = gitlog({
@@ -39,31 +40,52 @@ async function copyData() {
 
 async function dockerUp() {
   await shell.exec("docker-compose -p micro-ql up -d", {
+    cwd: "../account",
     async: false
   });
 }
 
 async function dockerDown() {
   await shell.exec("docker-compose -p micro-ql down", {
+    cwd: "../account",
     async: false
   });
 }
 
 async function kill() {
-  await killPorts([5000])
+  await killPorts([5000, 5001, 5002])
 }
 
 async function run() {
   await dockerUp();
   await build();
-  await shell.exec("node dist/server.js", {
+  const LOGGER_PATH = path
+  shell.exec("node dist/server.js", {
     env: {
       PATH: process.env.PATH,
+      LOGGER_PATH: path.resolve("./log"),
       NODE_ENV: "development",
-      PORT: 5000
+      PORT: 5002
     },
-    async: false
+    async: true
   });
+  [{ cwd: "../account", port: 5001 }, { cwd: "../federated", port: 5000 }].forEach(async ({ cwd, port }) => {
+    shell.exec("npx gulp build", {
+      cwd,
+      async: false
+    });
+    shell.exec("node dist/server.js", {
+      cwd,
+      env: {
+        PATH: process.env.PATH,
+        LOGGER_PATH: path.resolve("./log"),
+        NODE_ENV: "development",
+        PORT: port
+      },
+      async: true
+    });
+  });
+  await waitPorts([5000, 5001, 5002])
 }
 
 async function killPorts(ports) {
@@ -127,25 +149,13 @@ async function fix() {
     async: false
   });
 }
+
 async function test() {
-  await fix();
   await kill();
   await shell.exec("rm -rf log dist", {
     async: false
   });
-  await build();
-  await dockerUp();
-  const proc = spawn("node", ["dist/server.js"], {
-    env: {
-      PATH: process.env.PATH,
-      NODE_ENV: "test",
-      PORT: 5000
-    }
-  });
-  proc.stdout.pipe(process.stdout);
-  proc.stderr.pipe(process.stderr);
-  console.log("waiting server...");
-  await waitPorts([5000])
+  await run();
   console.log(
     `npx mocha -r ts-node/register ${
     args.bail ? "-b" : ""
@@ -158,13 +168,12 @@ async function test() {
     {
       env: {
         PATH: process.env.PATH,
-        NODE_ENV: "test",
         TEST_SERVER: `http://localhost:5000`
       },
       async: false
     }
   );
-  proc.kill();
+  await kill();
 }
 
 module.exports = {

@@ -95,7 +95,9 @@ export class BaseTest {
     res = await this.post(
       `{
       auth(clientKey: "${ecdh.getPublicKey().toString("base64")}") {
-        salt(xlogin: "${xlogin}")
+        salt(xlogin: "${xlogin}") {
+          value
+        }
       }
     }`,
       { token: null }
@@ -106,7 +108,8 @@ export class BaseTest {
     expect(val, res.log).to.haveOwnProperty("data");
     expect(val.data, res.log).to.haveOwnProperty("auth");
     expect(val.data.auth, res.log).to.haveOwnProperty("salt");
-    const xsalt = val.data.auth.salt;
+    expect(val.data.auth.salt, res.log).to.haveOwnProperty("value");
+    const xsalt = val.data.auth.salt.value;
 
     const aesd = crypto.createDecipheriv("aes-256-ctr", aesKey, aesSalt);
     const salt = Buffer.concat([

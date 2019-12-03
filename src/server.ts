@@ -3,23 +3,19 @@ import 'reflect-metadata';
 import { ApolloServer, GraphQLExtension } from 'apollo-server-express';
 import express from 'express';
 import shrinkRay from 'shrink-ray-current';
-import { buildSchema } from 'type-graphql';
 import fs = require("fs");
 import path = require("path");
 
 import { getUser } from './authentication';
 import { customAuthChecker } from './authorization';
 import { config } from './config';
-import { AuthResolver } from './resolvers/auth';
-import { MovieResolver } from './resolvers/movie';
-import { RoleResolver } from './resolvers/role';
-import { UserResolver } from './resolvers/user';
+import { SettingResolver } from './resolvers/setting';
 import { LoggerMiddleware } from './services/logger';
 import { mongodb } from './services/mongodb';
-import { initMovie } from './services/setting';
-import { initRole } from './services/role';
+import { initSetting } from './services/setting';
 import { logger, NODE_ENV } from './services/service';
-import { initUser } from './services/user';
+import { CommonResolver } from "./resolvers/common";
+import { buildFederatedSchema } from "./buildFederatedSchema";
 
 smap.install();
 
@@ -40,7 +36,7 @@ class BasicLogging extends GraphQLExtension {
     if (event) {
       event.end = new Date();
       const t = process.hrtime(event.t);
-      event.duration =  t[0] * 1000000000 + t[1];
+      event.duration = t[0] * 1000000000 + t[1];
       delete event.t;
     }
     logger.info({ gqlRes: graphqlResponse, event }, 'graphql-response');
@@ -48,8 +44,8 @@ class BasicLogging extends GraphQLExtension {
 }
 
 export async function bootstrap() {
-  const schema = await buildSchema({
-    resolvers: [AuthResolver, RoleResolver, UserResolver, MovieResolver],
+  const schema = await buildFederatedSchema({
+    resolvers: [CommonResolver],
     authChecker: customAuthChecker,
     globalMiddlewares: [LoggerMiddleware],
     authMode: "null",
@@ -58,9 +54,7 @@ export async function bootstrap() {
   });
 
   await mongodb.init(config);
-  await initUser();
-  await initRole();
-  await initMovie();
+  await initSetting();
 
   const data = fs.readdirSync(path.resolve("./dist/data"));
   data.sort();
@@ -171,9 +165,10 @@ export async function bootstrap() {
       return err;
     },
     context: async ({ req }) => {
-      const user = await getUser(req);
+      const errors = [];
+      const user = await getUser({ errors }, req);
       const remoteAddress = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-      return { user, headers: req.headers, remoteAddress };
+      return { user, headers: req.headers, remoteAddress, errors };
     },
     extensions: [() => {
       return new BasicLogging();

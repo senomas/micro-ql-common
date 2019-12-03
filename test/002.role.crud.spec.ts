@@ -19,7 +19,7 @@ export class RoleCrudTest extends BaseTest {
         name
         token {
           seq
-          token
+          value
         }
       }
       roles(skip: 1) {
@@ -44,7 +44,7 @@ export class RoleCrudTest extends BaseTest {
         name
         token {
           seq
-          token
+          value
         }
       }
       roles(orderBy: { field: name, type: desc }) {

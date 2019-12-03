@@ -14,6 +14,9 @@ export class Setting {
   @Field()
   public name: string;
 
+  @Field()
+  public description: string;
+
   @Field(type => [String], { nullable: true })
   public value: string[];
 }
@@ -26,6 +29,9 @@ export class AddSettingInput {
   @Field()
   public name: string;
 
+  @Field()
+  public description: string;
+
   @Field(type => [String], { nullable: true })
   public value: string[];
 }
@@ -37,6 +43,9 @@ export class UpdateSettingInput {
 
   @Field()
   public name: string;
+
+  @Field()
+  public description: string;
 
   @Field(type => [String], { nullable: true })
   public value: string[];
@@ -52,6 +61,9 @@ export class FilterSettingInput {
 
   @Field({ nullable: true })
   public name: string;
+
+  @Field({ nullable: true })
+  public description: string;
 
   @Field({ nullable: true })
   public nameRegex: string;

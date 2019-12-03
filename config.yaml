@@ -42,24 +42,19 @@ keys:
   auth:
     key: |
       -----BEGIN PUBLIC KEY-----
-      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEO5gl9qu1vfftugBe3j5fJetJUhbV
-      4GFtYCuLVvpGX44dgjmjjKQ6fAAiYagdQlo5FAlh4Mp3ua6kFk2G15tywA==
+      MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEAckN6k0lflLvqIpEACUsNPubsVtHeom3
+      YMT9ZrIGIITEukV/+S371KTgyD1KC22ucwznpsffJQtEIihJcj2h3g==
       -----END PUBLIC KEY-----
-    pkey: |
-      -----BEGIN EC PRIVATE KEY-----
-      MHcCAQEEIOTTmjPnVkVphJ/YGgBynBBuBdhPM1grwX3b+eFpS3fAoAoGCCqGSM49
-      AwEHoUQDQgAEO5gl9qu1vfftugBe3j5fJetJUhbV4GFtYCuLVvpGX44dgjmjjKQ6
-      fAAiYagdQlo5FAlh4Mp3ua6kFk2G15tywA==
-      -----END EC PRIVATE KEY-----
   account:
     key: |
       -----BEGIN PUBLIC KEY-----
-      MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEP9Xj+RfjpBxjmURMLozwuD5BhG8y
-      zdh7lwTUT0dkNLZuWbma+JLNBh8H/xVBx7Znu/aTKIICq10yNL0vHSVgEg==
+      MFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEnpWaHslCxvRihdsihzEEGJrtZ5QVIVrk
+      BZINy2fMMqB6P+hvjxa3Ptx8JJtqID6o8sMi7V6sBt2cg39onv1JNg==
       -----END PUBLIC KEY-----
+  common:
     pkey: |
       -----BEGIN EC PRIVATE KEY-----
-      MHcCAQEEILMJRGTXYxO2w25MQ/VLFEvFP6e2yaeHMCx9EWNz5pTBoAoGCCqGSM49
-      AwEHoUQDQgAEP9Xj+RfjpBxjmURMLozwuD5BhG8yzdh7lwTUT0dkNLZuWbma+JLN
-      Bh8H/xVBx7Znu/aTKIICq10yNL0vHSVgEg==
+      MHQCAQEEIIBhedo5zOREbMyoYlo/kdIDs7YMOTZwmCPOH3MsvNQ4oAcGBSuBBAAK
+      oUQDQgAE3ejh5u9NsM33x+gyId8wLOIAAsWCY7PKMnMgay181cbZlkf6rJr3ykXE
+      YE7Ni3PS1CFCApLn5lwBmmESzhg1+Q==
       -----END EC PRIVATE KEY-----

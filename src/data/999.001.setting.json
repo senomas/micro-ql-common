@@ -1,0 +1,21 @@
+[
+  {
+    "code": "admin",
+    "name": "Admin",
+    "description": "Admin",
+    "value": [
+      "user.read",
+      "user.update",
+      "user.activate",
+      "user.deactivate",
+      "role.create",
+      "role.read",
+      "role.update",
+      "role.delete",
+      "movie.create",
+      "movie.read",
+      "movie.update",
+      "movie.delete"
+    ]
+  }
+]
